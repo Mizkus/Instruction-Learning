@@ -1,0 +1,7 @@
+stages:
+  download_data:
+    cmd: python src/instruction_learning/data/download.py
+    deps:
+      - src/instruction_learning/data/download.py
+    outs:
+      - data/raw

@@ -1,0 +1,15 @@
+defaults:
+  - data: base
+  - model: linear
+  - training: base
+  - logging: base
+  - _self_
+
+project:
+  name: instruction-learning
+  seed: 42
+
+paths:
+  data_root: ${oc.env:INSTRUCTION_LEARNING_DATA,${hydra:runtime.cwd}/data}
+  artifacts_root: ${hydra:runtime.cwd}/artifacts
+  mlflow_root: ${hydra:runtime.cwd}/mlruns

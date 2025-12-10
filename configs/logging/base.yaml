@@ -1,0 +1,9 @@
+logging:
+  mlflow:
+    tracking_uri: http://127.0.0.1:8080
+    experiment_name: instruction-learning
+    run_name: ${project.name}
+  filesystem:
+    plots_dir: ${paths.artifacts_root}/plots
+    metrics_path: ${paths.artifacts_root}/metrics.json
+  capture_git: true

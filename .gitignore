@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.dylib
+*.egg-info/
+.eggs/
+.env
+.venv
+.uv
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Project artifacts
+artifacts/
+checkpoints/
+logs/
+mlruns/
+plots/
+data/
+outputs/
+
+# DVC
+.dvc/tmp/
+.dvc/cache/
+
+# Hydra
+multirun/
+outputs/**
+
+# Node
+node_modules/

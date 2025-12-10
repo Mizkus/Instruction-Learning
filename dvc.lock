@@ -1,0 +1,15 @@
+schema: '2.0'
+stages:
+  download_data:
+    cmd: python src/instruction_learning/data/download.py
+    deps:
+    - path: src/instruction_learning/data/download.py
+      hash: md5
+      md5: 5aacc569c0a2a37dfcad56dd932083b9
+      size: 331
+    outs:
+    - path: data/raw
+      hash: md5
+      md5: 5371e17ebcb0627f8dfd58e9d5e07f17.dir
+      size: 26
+      nfiles: 1
