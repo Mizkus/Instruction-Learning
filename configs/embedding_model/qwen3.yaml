@@ -1,0 +1,5 @@
+name: Qwen/Qwen3-Embedding-0.6B
+device: ${oc.env:INSTRUCTION_LEARNING_DEVICE,cuda}
+batch_size: 8
+normalize: true
+max_seq_length: 3000

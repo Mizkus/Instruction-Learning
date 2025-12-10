@@ -2,6 +2,25 @@ stages:
   download_data:
     cmd: python src/instruction_learning/data/download.py
     deps:
+      - configs/config.yaml
+      - configs/instructions/topic.yaml
       - src/instruction_learning/data/download.py
     outs:
       - data/raw
+  preprocess_embeddings:
+    cmd: PYTHONPATH=src python -m instruction_learning.pipelines.nyt_preprocess
+    deps:
+      - configs/config.yaml
+      - configs/data/base.yaml
+      - configs/instructions/topic.yaml
+      - configs/embedding_model/qwen3.yaml
+      - src/instruction_learning/data/download.py
+      - src/instruction_learning/pipelines/__init__.py
+      - src/instruction_learning/pipelines/nyt_preprocess.py
+    outs:
+      - data/processed
+      - data/embeddings/base
+      - data/embeddings/instruct
+      - data/embeddings/labels.npy
+      - data/embeddings/label_mapping.json
+      - data/embeddings/metadata.json

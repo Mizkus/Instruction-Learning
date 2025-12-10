@@ -2,27 +2,20 @@ trainer:
   accelerator: auto
   devices: 1
   max_epochs: 10
-  gradient_clip_val: 1.0
-  precision: 32
   log_every_n_steps: 10
 
 optimizer:
-  name: adamw
+  name: adam
   lr: 1e-3
-  weight_decay: 1e-4
-
-scheduler:
-  name: cosine
-  t_max: 10
 
 batch_size:
-  train: 512
-  eval: 1024
+  train: 64
+  eval: 128
 
 dataloader:
   num_workers: 4
   pin_memory: true
 
 monitoring:
-  val_metric: v_measure
+  val_metric: val_v_measure_pred
   mode: max

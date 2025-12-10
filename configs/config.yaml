@@ -3,6 +3,8 @@ defaults:
   - model: linear
   - training: base
   - logging: base
+  - embedding_model: qwen3
+  - instructions: topic
   - _self_
 
 project:
@@ -10,6 +12,7 @@ project:
   seed: 42
 
 paths:
-  data_root: ${oc.env:INSTRUCTION_LEARNING_DATA,${hydra:runtime.cwd}/data}
-  artifacts_root: ${hydra:runtime.cwd}/artifacts
-  mlflow_root: ${hydra:runtime.cwd}/mlruns
+  project_root: ${oc.env:INSTRUCTION_LEARNING_PROJECT_ROOT,${oc.env:PWD}}
+  data_root: ${oc.env:INSTRUCTION_LEARNING_DATA,${paths.project_root}/data}
+  artifacts_root: ${oc.env:INSTRUCTION_LEARNING_ARTIFACTS,${paths.project_root}/artifacts}
+  mlflow_root: ${oc.env:INSTRUCTION_LEARNING_MLFLOW,${paths.project_root}/mlruns}
