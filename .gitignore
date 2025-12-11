@@ -25,6 +25,7 @@ htmlcov/
 /mlruns/
 /plots/
 /outputs/
+/data/
 
 # DVC
 .dvc/tmp/
