@@ -19,7 +19,9 @@ htmlcov/
 .vscode/
 
 # Project artifacts (root-level only)
-/artifacts/
+/artifacts/**
+!/artifacts/
+!/artifacts/**/*.dvc
 /checkpoints/
 /logs/
 /mlruns/

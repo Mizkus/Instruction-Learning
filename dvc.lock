@@ -73,8 +73,8 @@ stages:
       size: 16128
     - path: data/embeddings/metadata.json
       hash: md5
-      md5: 1b188d6dc95b047e69febc194b5d1a01
-      size: 551
+      md5: 6435f564da329c1dab434d0858c8d2b9
+      size: 547
     - path: data/processed
       hash: md5
       md5: ab27c723bbe508c4405bb58c345fe0a6.dir
