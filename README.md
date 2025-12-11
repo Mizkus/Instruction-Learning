@@ -1,88 +1,53 @@
 # Instruction Learning
 
-Instruction Learning — учебный проект, где мы ускоряем инструктирование текстовых эмбеддингов: вместо повторного прогона новостей через тяжёлую модель Qwen/Qwen3-0.6B-Embedding мы учим лёгкий линейный адаптер, который переводит базовые эмбеддинги в инструктированные. Качество оцениваем через V-measure кластеризации, скорость выигрываем за счёт одномоментного предрасчёта teacher-эмбеддингов.
+## Project Description
+Instruction Learning builds a lightweight linear adapter that maps base embeddings from Qwen/Qwen3-0.6B-Embedding into instruction-following space. The goal is to keep cluster quality (V-measure) close to the teacher model while avoiding repeated heavy inference. Training relies on the first 2 000 samples of the NYTClustering dataset (topics) with a 70/20/10 train/val/test split, and both teacher vs. adapter quality plus latency speedup are evaluated on that split.
 
-## Технологический стек
-- **Hydra** — конфигурации (data/model/training/logging/instructions)
-- **PyTorch Lightning** — обучение линейного адаптера
-- **SentenceTransformers** — расчёт Qwen3 эмбеддингов по инструкции
-- **DVC** — управление стадиями `download_data` → `preprocess_embeddings`
-- **MLflow** — логирование метрик/артефактов (`val_v_measure_pred`, чекпоинты, latency speedup)
-
-## Требования
-- Python 3.10+
-- [Poetry](https://python-poetry.org/) для управления зависимостями
-- Доступ в интернет (Hugging Face dataset `BrandonZYW/NYTClustering` и модель `Qwen/Qwen3-0.6B-Embedding`)
-- (Опционально) токен Hugging Face в `HF_TOKEN`, если требуется аутентификация
-
-## Быстрый старт
-1. **Клонируйте репозиторий**
+## Technical Section
+### Setup
+1. Install Poetry and Python 3.10+.
+2. Clone the repo and install all dependencies:
    ```bash
-   git clone <this-repo-url>
+   git clone <repo-url>
    cd Instruction-Learning
-   ```
-2. **Установите зависимости через Poetry**
-   ```bash
    poetry install
    poetry run pre-commit install
    ```
-3. **(Опционально) Запустите MLflow UI** в отдельном окне:
+3. (Optional) launch MLflow locally for metric tracking:
    ```bash
    poetry run mlflow ui --backend-store-uri mlruns --port 8080
    ```
-4. **Соберите данные и эмбеддинги** (через DVC — включает загрузку Hugging Face датасета и предрасчёт Qwen3 эмбеддингов):
+
+### Train
+1. Prepare data and embeddings via DVC (downloads HuggingFace dataset BrandonZYW/NYTClustering and precomputes base+instruct embeddings with SentenceTransformers):
    ```bash
    poetry run python -m dvc repro
-   # или поэтапно
+   # or step-by-step
    poetry run python -m instruction_learning.cli download-data
    poetry run python -m instruction_learning.cli preprocess
    ```
-5. **Запустите обучение** (Hydra-конфиг можно переопределять флагами `+group.option=value`):
+2. Train the adapter with PyTorch Lightning + Hydra:
    ```bash
    poetry run python -m instruction_learning.cli train
-   # пример с override: poetry run python -m instruction_learning.cli train training.trainer.max_epochs=30
    ```
-6. **Результаты**
-   - чекпоинт: `artifacts/checkpoints/linear-adapter.ckpt`
-   - эмбеддинги: `data/embeddings/{base,instruct}`
-   - автоматический тестовый прогон: после обучения запускается `trainer.test` (по лучшему чекпоинту) с логированием `test_loss`, `test_v_measure_pred` и т.д.
-   - логи MLflow: `mlruns/` (по умолчанию сервер `http://127.0.0.1:8080`), туда уходят `train_loss`, `val_loss`, `val_v_measure_pred`, `val_v_measure_teacher`, `test_*`, а также `teacher_instruct_latency_sec`, `adapter_latency_sec`, `latency_speedup`
+   The command logs metrics (`train_loss`, `val_v_measure_pred`, latency numbers) into MLflow and saves the top checkpoint at `artifacts/checkpoints/linear-adapter.ckpt`. After fitting, `trainer.test` evaluates the best checkpoint on the held-out split and logs `test_*` metrics.
 
-## Пайплайн данных
-- `download_data`: скачивает subset `topic` датасета [BrandonZYW/NYTClustering](https://huggingface.co/datasets/BrandonZYW/NYTClustering) и сохраняет `data/raw/topic.csv`.
-- `preprocess_embeddings`: чистит дубликаты/NaN, сохраняет `data/processed/topic_clean.{csv,jsonl}` и предрасчитывает эмбеддинги SentenceTransformer по инструкции `"Instruct: Identify the topic of this news article. Query: "` (база + instruct) + `labels.npy`.
-- DVC конфигурация `dvc.yaml` описывает обе стадии; `dvc.lock` фиксирует артефакты.
+### Production preparation
+- Checkpoint export: trained weights live at `artifacts/checkpoints/linear-adapter.ckpt` and can be loaded by `InstructionAdapterModule` for downstream serving/inference.
+- Data/embedding artifacts are versioned with DVC under `data/` (raw, processed, embeddings) to guarantee reproducibility.
+- MLflow keeps experiment history (default tracking URI `http://127.0.0.1:8080`).
 
-## Структура репозитория
-```
-.
-├── configs/                    # Hydra-конфиги (data/model/training/logging/embedding_model)
-├── src/instruction_learning
-│   ├── data/                   # download.py, DataModule
-│   ├── models/                 # LinearAdapter LightningModule
-│   ├── pipelines/              # NYTClustering preprocessing + embeddings
-│   ├── cli.py                  # fire CLI (download-data, preprocess, train)
-│   └── train.py                # Hydra entrypoint для обучения
-├── dvc.yaml / dvc.lock         # DVC стадии данных
-├── README.md                   # этот файл
-├── pyproject.toml / poetry.lock # зависимости проекта
-└── .pre-commit-config.yaml     # форматирование и линты
-```
-
-## Основные команды
-| Цель | Команда |
-| --- | --- |
-| Установка зависимостей | `poetry install` |
-| Запуск хуков качества | `poetry run pre-commit run -a` |
-| Загрузка данных | `poetry run python -m instruction_learning.cli download-data` |
-| Препроцессинг + эмбеддинги | `poetry run python -m instruction_learning.cli preprocess` |
-| Обучение | `poetry run python -m instruction_learning.cli train` |
-| Полный пайплайн через DVC | `poetry run python -m dvc repro` |
-| MLflow UI | `poetry run mlflow ui --backend-store-uri mlruns --port 8080` |
-
-## Примечания
-- Если интерпретатор не видит GPU/CUDA, можно поставить CPU‑сборку PyTorch командой `poetry run pip install torch==<версия> --index-url https://download.pytorch.org/whl/cpu` после `poetry install`.
-- Для повторного запуска достаточно обновить данные (`dvc repro`) — стадия `preprocess_embeddings` пересчитается, если менялся код/конфиг.
-- Hydra складывает логи запуска в `./outputs/`; чтобы фиксировать артефакты в одном месте, используем `paths.artifacts_root`.
-
-Теперь можно заново клонировать репозиторий и воспроизвести весь сценарий по инструкции выше.
+### Infer
+1. Prepare any CSV file that contains a `text` column (rename or pass `--text_column` if needed). You can limit rows via `--limit` and optionally deduplicate/drop missing values by editing `configs/inference/base.yaml`.
+2. Run the inference CLI; it will encode the requested texts, reuse cached embeddings if the same file/instruction combo was processed before, run the trained adapter checkpoint, and optionally measure the teacher (instructional) encoder for latency comparison:
+   ```bash
+   poetry run python -m instruction_learning.cli infer \
+       --csv_path /path/to/custom.csv \
+       --text_column text \
+       --output_dir artifacts/inference
+   ```
+3. Outputs (all in `artifacts/inference` by default):
+   - `base.npy`: raw base embeddings produced by Qwen3 encoder.
+   - `adapter.npy`: adapter-projected embeddings ready for instruction-aware consumers.
+   - `teacher.npy`: (optional) direct instruction embeddings for latency benchmarking.
+   - `metadata.json`: timings, cache hash, instruction, and MLflow run info. Latency metrics are also logged to MLflow when `logging.mlflow.tracking_uri` is configured.

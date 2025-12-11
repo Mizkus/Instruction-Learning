@@ -5,6 +5,7 @@ defaults:
   - logging: base
   - embedding_model: qwen3
   - instructions: topic
+  - inference: base
   - _self_
 
 project:

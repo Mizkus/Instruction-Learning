@@ -1,0 +1,22 @@
+dataset:
+  csv_path: ${paths.project_root}/data/inference/input.csv
+  text_column: text
+  limit: null
+  deduplicate: false
+  dropna: true
+
+output:
+  dir: ${paths.artifacts_root}/inference
+  base_filename: base.npy
+  adapter_filename: adapter.npy
+  teacher_filename: teacher.npy
+  metadata_filename: metadata.json
+
+adapter:
+  checkpoint_path: ${model.checkpoint.dirpath}/${model.checkpoint.filename}
+  batch_size: ${training.batch_size.eval}
+  device: auto  # auto | cpu | cuda
+  log_to_mlflow: true
+
+teacher:
+  compute_embeddings: true
