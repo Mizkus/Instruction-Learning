@@ -1,0 +1,25 @@
+dataset:
+  name: nyt_clustering
+  huggingface_id: BrandonZYW/NYTClustering
+  url: https://huggingface.co/datasets/BrandonZYW/NYTClustering
+  subset: topic
+  splits:
+    - train
+    - validation
+    - test
+  topic_csv: topic.csv
+  source: local  # options: local | gdrive | s3
+  text_column: text
+  target_column: cluster
+  max_samples: 2000
+  instructions:
+    field: topic
+  embeddings:
+    base_path: ${paths.data_root}/embeddings/base
+    instruct_path: ${paths.data_root}/embeddings/instruct
+  split:
+    train_ratio: 0.7
+    val_ratio: 0.2
+    test_ratio: 0.1
+    shuffle: true
+    seed: ${project.seed}

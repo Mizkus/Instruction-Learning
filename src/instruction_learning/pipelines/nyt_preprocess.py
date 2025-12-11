@@ -65,10 +65,16 @@ class NYTPreprocessor:
         csv_path = download_data(target_dir=self.raw_dir, cfg=self.cfg)
         df = pd.read_csv(csv_path)
         df = self._clean_dataframe(df)
+        max_samples = self.data_cfg.get("max_samples")
+        if max_samples is not None:
+            df = df.head(int(max_samples))
         cleaned_csv = self.processed_dir / "topic_clean.csv"
         df.to_csv(cleaned_csv, index=False)
         jsonl_path = self.processed_dir / "topic_clean.jsonl"
         df.to_json(jsonl_path, orient="records", lines=True, force_ascii=False)
+        if self._embeddings_cached(len(df)):
+            print("[preprocess] Cached embeddings detected for matching instruction; skipping recomputation.")
+            return
         self._compute_and_save_embeddings(df)
 
     def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -105,6 +111,7 @@ class NYTPreprocessor:
             "instruct_encode_seconds": instruct_seconds,
             "base_latency_ms": (base_seconds / len(texts) * 1e3) if len(texts) else None,
             "instruct_latency_ms": (instruct_seconds / len(texts) * 1e3) if len(texts) else None,
+            "max_samples": self.data_cfg.get("max_samples", len(texts)),
         }
         with (self.embeddings_dir / "metadata.json").open("w", encoding="utf-8") as fp:
             json.dump(stats, fp, ensure_ascii=False, indent=2)
@@ -130,6 +137,17 @@ class NYTPreprocessor:
         )
         elapsed = time.perf_counter() - start
         return embeddings, elapsed
+
+    def _embeddings_cached(self, expected_rows: int) -> bool:
+        metadata_path = self.embeddings_dir / "metadata.json"
+        base_file = self.base_dir / f"{self.data_cfg.instructions.field}.npy"
+        instruct_file = self.instruct_dir / f"{self.data_cfg.instructions.field}.npy"
+        if not (metadata_path.exists() and base_file.exists() and instruct_file.exists()):
+            return False
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        if metadata.get("instruction") != self.instruction_text:
+            return False
+        return metadata.get("num_samples") == expected_rows
 
 
 def preprocess_nyt_dataset(cfg: Optional[DictConfig] = None) -> None:
