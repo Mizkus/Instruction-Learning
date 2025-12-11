@@ -15,7 +15,7 @@ output:
 adapter:
   checkpoint_path: ${model.checkpoint.dirpath}/${model.checkpoint.filename}
   batch_size: ${training.batch_size.eval}
-  device: auto  # auto | cpu | cuda
+  device: auto # auto | cpu | cuda
   log_to_mlflow: true
 
 teacher:
