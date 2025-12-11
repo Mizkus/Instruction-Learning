@@ -23,7 +23,7 @@ Instruction Learning builds a lightweight linear adapter that maps base embeddin
 
 ### Train
 
-1. Prepare data and embeddings via DVC (downloads HuggingFace dataset BrandonZYW/NYTClustering and precomputes base+instruct embeddings with SentenceTransformers):
+1. Prepare data and embeddings via DVC (downloads HuggingFace dataset BrandonZYW/NYTClustering and precomputes base+instruct embeddings with SentenceTransformers). If the artifacts are already stored in the configured DVC remote, simply run `poetry run python -m dvc pull` and skip recomputation:
    ```bash
    poetry run python -m dvc repro
    # or step-by-step
