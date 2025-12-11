@@ -18,14 +18,13 @@ htmlcov/
 .idea/
 .vscode/
 
-# Project artifacts
-artifacts/
-checkpoints/
-logs/
-mlruns/
-plots/
-data/
-outputs/
+# Project artifacts (root-level only)
+/artifacts/
+/checkpoints/
+/logs/
+/mlruns/
+/plots/
+/outputs/
 
 # DVC
 .dvc/tmp/
