@@ -5,6 +5,9 @@ import subprocess
 import time
 from pathlib import Path
 from typing import List, Optional, Tuple
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 import lightning as L
 import torch
@@ -63,6 +66,9 @@ def _build_mlflow_logger(cfg: DictConfig) -> Optional[MLFlowLogger]:
     mlflow_cfg = cfg.logging.mlflow
     tracking_uri = mlflow_cfg.tracking_uri
     if not tracking_uri:
+        return None
+    if not _mlflow_tracking_available(tracking_uri):
+        print(f"[train] MLflow tracking URI '{tracking_uri}' is unreachable; skipping MLflow logging.")
         return None
     logger = MLFlowLogger(
         experiment_name=mlflow_cfg.experiment_name,
@@ -142,6 +148,23 @@ def _best_checkpoint_path(callbacks: List[Callback]) -> Optional[str]:
             if callback.best_model_path:
                 return callback.best_model_path
     return None
+
+
+def _mlflow_tracking_available(tracking_uri: str, timeout: float = 1.0) -> bool:
+    """Fast connectivity check to avoid hanging when MLflow UI is down."""
+    parsed = urlparse(tracking_uri)
+    if parsed.scheme in {"http", "https"}:
+        req = Request(tracking_uri, method="HEAD")
+        try:
+            urlopen(req, timeout=timeout)
+            return True
+        except HTTPError:
+            return True
+        except URLError:
+            return False
+        except Exception:
+            return False
+    return True
 
 
 @hydra_main(config_path="../../configs", config_name="config", version_base="1.3")
